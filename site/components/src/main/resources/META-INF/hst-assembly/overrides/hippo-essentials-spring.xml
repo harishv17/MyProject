@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2015 Hippo B.V. (http://www.onehippo.com)
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+
+    <!--Override the default pageable factory-->
+    <bean id="org.onehippo.cms7.essentials.components.ext.PageableFactory"
+          class="org.onehippo.cms7.essentials.components.ext.DefaultPageableFactory"/>
+
+    <!-- Default no-operation do before extension -->
+    <bean id="org.onehippo.cms7.essentials.components.ext.DoBeforeRenderExtension"
+          class="org.onehippo.cms7.essentials.components.ext.NoopDoBeforeRenderExtension"/>
+
+
+    <!-- The following three imports will include pipeline configurations for
+       both JaxrsRestPlainPipeline and JaxrsRestContentPipeline !!! -->
+    <import resource="classpath:/org/hippoecm/hst/site/optional/jaxrs/SpringComponentManager-rest-jackson.xml"/>
+    <import resource="classpath:/org/hippoecm/hst/site/optional/jaxrs/SpringComponentManager-rest-plain-pipeline.xml"/>
+    <import resource="classpath:/org/hippoecm/hst/site/optional/jaxrs/SpringComponentManager-rest-content-pipeline.xml"/>
+
+    <!-- Your custom JAX-RS REST Plain Resource Providers will be added into
+         the following list !!! -->
+    <bean id="customRestPlainResourceProviders"
+          class="org.springframework.beans.factory.config.ListFactoryBean">
+        <property name="sourceList">
+            <list>
+                <!-- Wrap your JAX-RS component by SingletonResourceProvider. -->
+                <bean class=
+                              "org.apache.cxf.jaxrs.lifecycle.SingletonResourceProvider">
+                    <constructor-arg>
+                        <bean class=
+                                      "org.example.controller.NodesController"/>
+                    </constructor-arg>
+                </bean>
+            </list>
+        </property>
+    </bean>
+
+
+    <!-- Your custom JAX-RS REST Resource Providers will be added into the
+         following list !!! -->
+    <!-- The following sourceList is not used for Plain JAX-RS Services,
+         but used for Content/Context Aware JAX-RS Services. -->
+    <bean id="customRestContentResourceProviders"
+          class="org.springframework.beans.factory.config.ListFactoryBean">
+        <property name="sourceList">
+            <list>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="customJcrObservationEventListenerItems"
+          class="org.springframework.beans.factory.config.ListFactoryBean">
+        <property name="sourceList">
+            <list>
+                <bean class="org.hippoecm.hst.core.jcr.EventListenerItemImpl">
+                    <property name="nodeAddedEnabled" value="true"/>
+                    <property name="nodeRemovedEnabled" value="true"/>
+                    <property name="propertyAddedEnabled" value="true"/>
+                    <property name="propertyChangedEnabled" value="true"/>
+                    <property name="propertyRemovedEnabled" value="true"/>
+                    <property name="absolutePath" value="/content"/>
+                    <property name="deep" value="true"/>
+                    <property name="eventListener">
+                        <bean class="org.example.listener.MyRepositoryEventListener">
+                        </bean>
+                    </property>
+                </bean>
+            </list>
+        </property>
+    </bean>
+
+</beans>
